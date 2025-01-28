@@ -11,8 +11,10 @@ import {
 import { GiLotus, GiPeaceDove, GiMusicalNotes } from 'react-icons/gi';
 import { auth, db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 export default function Dashboard() {
+  const [user] = useAuthState(auth);
   const [learningStats, setLearningStats] = useState([
     { 
       id: 1,
@@ -98,7 +100,7 @@ export default function Dashboard() {
     <div className="p-6 space-y-6 bg-gradient-to-br from-orange-50 to-pink-50">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-orange-900">Namaste, Dancer!</h1>
+          <h1 className="text-2xl font-bold text-orange-900">Namaste, {user?.displayName || 'Dancer'}!</h1>
           <p className="text-orange-700 mt-1">Continue your journey in Indian classical dance</p>
         </div>
         <Link to="/practice-studio" className="btn bg-orange-600 hover:bg-orange-700 text-white border-none">
