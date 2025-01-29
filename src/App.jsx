@@ -2,6 +2,9 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import PracticeStudio from './pages/PracticeStudio'
+import MudraPractice from './pages/MudraPractice'
+import DancePractice from './pages/DancePractice'
+import PosePractice from './pages/PosePractice'
 import Timeline from './pages/Timeline'
 import NatyaSangam from './pages/NatyaSangam'
 import Achievements from './pages/Achievements'
@@ -10,6 +13,8 @@ import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import DanceForm from './pages/Form'
 import { Toaster } from 'react-hot-toast'
+import CulturalFactPopup from './components/CulturalFactPopup'
+import GhungrooDetection from './components/GhungrooDetection'
 
 const AppContent = () => {
   const location = useLocation();
@@ -23,6 +28,9 @@ const AppContent = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/practice-studio" element={<PracticeStudio />} />
+          <Route path="/practice/mudra" element={<MudraPractice />} />
+          <Route path="/practice/dance" element={<DancePractice />} />
+          <Route path="/practice/pose" element={<PosePractice />} />
           <Route path="/timeline" element={<Timeline />} />
           <Route path="/natya-sangam" element={<NatyaSangam />} />
           <Route path="/achievements" element={<Achievements />} />
@@ -30,8 +38,11 @@ const AppContent = () => {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/form" element={<DanceForm />} />
+          <Route path="/popup" element={<CulturalFactPopup/>}/>
+          <Route path='/ghungroo' element={<GhungrooDetection/>}/>
         </Routes>
       </div>
+      <CulturalFactPopup />
     </div>
   );
 };
