@@ -9,6 +9,7 @@ import Journey from './pages/Journey'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import DanceForm from './pages/Form'
+import CulturalFactPopup from './components/CulturalFactPopup'
 
 const AppContent = () => {
   const location = useLocation();
@@ -29,6 +30,7 @@ const AppContent = () => {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/form" element={<DanceForm />} />
+          <Route path="/popup" element={<CulturalFactPopup/>}/>
         </Routes>
       </div>
     </div>
