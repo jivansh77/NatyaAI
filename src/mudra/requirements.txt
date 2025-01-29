@@ -1,0 +1,7 @@
+roboflow
+ultralytics>=8.0.196
+opencv-python
+pillow
+supervision>=0.15.0
+requests
+numpy 
