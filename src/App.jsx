@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import PracticeStudio from './pages/PracticeStudio'
 import MudraPractice from './pages/MudraPractice'
 import DancePractice from './pages/DancePractice'
+import PosePractice from './pages/PosePractice'
 import Timeline from './pages/Timeline'
 import NatyaSangam from './pages/NatyaSangam'
 import Achievements from './pages/Achievements'
@@ -11,6 +12,7 @@ import Journey from './pages/Journey'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import DanceForm from './pages/Form'
+import { Toaster } from 'react-hot-toast'
 import CulturalFactPopup from './components/CulturalFactPopup'
 import GhungrooDetection from './components/GhungrooDetection'
 
@@ -28,6 +30,7 @@ const AppContent = () => {
           <Route path="/practice-studio" element={<PracticeStudio />} />
           <Route path="/practice/mudra" element={<MudraPractice />} />
           <Route path="/practice/dance" element={<DancePractice />} />
+          <Route path="/practice/pose" element={<PosePractice />} />
           <Route path="/timeline" element={<Timeline />} />
           <Route path="/natya-sangam" element={<NatyaSangam />} />
           <Route path="/achievements" element={<Achievements />} />
@@ -46,8 +49,11 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <>
+      <Toaster position="top-right" />
+      <Router>
+        <AppContent />
+      </Router>
+    </>
   );
 }
