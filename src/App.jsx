@@ -37,11 +37,8 @@ const AppContent = () => {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/form" element={<DanceForm />} />
-<<<<<<< HEAD
           <Route path="/popup" element={<CulturalFactPopup/>}/>
           <Route path='/ghungroo' element={<GhungrooDetection/>}/>
-=======
->>>>>>> 9ef25a520721342734701af6f7fb69fb1cca1bce
         </Routes>
       </div>
       <CulturalFactPopup />

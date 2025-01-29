@@ -27,11 +27,8 @@
     "react-firebase-hooks": "^5.1.1",
     "react-icons": "^5.4.0",
     "react-router-dom": "^7.1.0",
-<<<<<<< HEAD
-    "react-webcam": "^7.2.0"
-=======
+    "react-webcam": "^7.2.0",
     "three": "^0.172.0"
->>>>>>> 9ef25a520721342734701af6f7fb69fb1cca1bce
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
