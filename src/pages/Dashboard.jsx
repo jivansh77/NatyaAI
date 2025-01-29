@@ -1,17 +1,113 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Link } from 'react-router-dom';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Text3D, Center } from '@react-three/drei';
+import * as THREE from 'three';
+import { motion } from 'framer-motion';
 import { 
   RiVideoLine, 
   RiTimeLine, 
   RiMedalLine, 
   RiHeartLine,
   RiBookLine,
-  RiGroupLine
+  RiGroupLine,
+  RiRoadMapLine,
+  RiLightbulbLine,
+  RiCheckLine,
+  RiArrowRightLine
 } from 'react-icons/ri';
 import { GiLotus, GiPeaceDove, GiMusicalNotes } from 'react-icons/gi';
 import { auth, db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
+
+const RoadmapNode = ({ node, isSelected, onClick }) => {
+  // Calculate the projected date
+  const getProjectedDate = (timeRequired) => {
+    const days = parseInt(timeRequired);
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  };
+
+  return (
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className={`relative p-4 rounded-lg cursor-pointer transition-all duration-300 ${
+        isSelected 
+          ? 'bg-orange-100 border-2 border-orange-500' 
+          : node.isCompleted 
+            ? 'bg-green-50 border-2 border-green-500' 
+            : 'bg-gray-50 border-2 border-gray-300'
+      }`}
+      onClick={() => onClick(node)}
+    >
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          node.isCompleted 
+            ? 'bg-green-500 text-white' 
+            : isSelected 
+              ? 'bg-orange-500 text-white'
+              : 'bg-gray-200 text-gray-600'
+        }`}>
+          {node.isCompleted ? (
+            <RiCheckLine className="w-6 h-6" />
+          ) : (
+            <span className="font-semibold">{node.id.replace('node', '')}</span>
+          )}
+        </div>
+        <div className="flex-1">
+          <div className="flex justify-between items-start">
+            <h3 className={`font-semibold ${
+              node.isCompleted 
+                ? 'text-green-700' 
+                : isSelected 
+                  ? 'text-orange-700'
+                  : 'text-gray-700'
+            }`}>
+              {node.title}
+            </h3>
+            {!node.isCompleted && (
+              <div className="text-right">
+                <span className="text-xs text-orange-600 font-medium block">
+                  {getProjectedDate(node.timeRequired)}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {node.projectedStats ? `+${node.projectedStats.mudras} mudras, +${node.projectedStats.dances} dances` : ''}
+                </span>
+              </div>
+            )}
+          </div>
+          <p className="text-sm text-gray-600">{node.description.split('.')[0]}</p>
+          {node.currentProgress && (
+            <div className="mt-2 flex items-center gap-2">
+              <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                  style={{ width: `${node.currentProgress}%` }}
+                />
+              </div>
+              <span className="text-xs text-orange-600">{node.currentProgress}%</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const RoadmapPath = () => (
+  <div className="flex items-center justify-center py-2">
+    <motion.div
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center"
+    >
+      <RiArrowRightLine className="w-5 h-5 text-orange-500 rotate-90" />
+    </motion.div>
+  </div>
+);
 
 export default function Dashboard() {
   const [user] = useAuthState(auth);
@@ -48,6 +144,10 @@ export default function Dashboard() {
     trend: '+0',
     timeLeft: '8 days'
   });
+
+  const [roadmapData, setRoadmapData] = useState(null);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchGuruScore = async () => {
@@ -87,6 +187,49 @@ export default function Dashboard() {
 
     fetchGuruScore();
   }, [user]);
+
+  useEffect(() => {
+    const fetchRoadmapData = async () => {
+      if (!user) return;
+
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+          const achievements = userDoc.data().achievements || [];
+          
+          // Get completed categories
+          const completedMudras = achievements.filter(a => a.category === 'mudras').length;
+          const completedDances = achievements.filter(a => a.category === 'performances').length;
+          const completedPoses = achievements.filter(a => a.category === 'poses').length;
+
+          // Generate roadmap using Gemini API
+          const response = await fetch('http://localhost:5005/generate-roadmap', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              completedMudras,
+              completedDances,
+              completedPoses,
+              totalScore: guruScore.current
+            })
+          });
+
+          const data = await response.json();
+          setRoadmapData(data.roadmap);
+        }
+      } catch (error) {
+        console.error('Error fetching roadmap data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRoadmapData();
+  }, [user, guruScore.current]);
 
   const upcomingSessions = [
     {
@@ -135,6 +278,10 @@ export default function Dashboard() {
       readTime: "10 min"
     }
   ];
+
+  const handleNodeClick = (node) => {
+    setSelectedNode(node);
+  };
 
   return (
     <div className="p-6 space-y-6 bg-gradient-to-br from-orange-50 to-pink-50">
@@ -237,6 +384,153 @@ export default function Dashboard() {
                 </div>
               ))}
               </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Roadmap */}
+      <div className="card bg-white shadow-lg">
+        <div className="card-body">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <RiRoadMapLine className="w-6 h-6 text-orange-600" />
+              <h2 className="text-xl font-bold text-orange-900">Your Dance Journey Roadmap</h2>
+            </div>
+            {selectedNode && (
+              <button 
+                onClick={() => setSelectedNode(null)}
+                className="btn btn-sm btn-ghost text-orange-600"
+              >
+                Close Details
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* 2D Roadmap Visualization */}
+            <div className="lg:col-span-2">
+              {isLoading ? (
+                <div className="w-full h-full flex items-center justify-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500" />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {roadmapData?.nodes.map((node, index) => (
+                    <React.Fragment key={node.id}>
+                      <RoadmapNode
+                        node={node}
+                        isSelected={selectedNode?.id === node.id}
+                        onClick={handleNodeClick}
+                      />
+                      {index < roadmapData.nodes.length - 1 && <RoadmapPath />}
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Roadmap Details */}
+            <div className="space-y-4">
+              {selectedNode ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-orange-50 p-4 rounded-lg"
+                >
+                  <h3 className="text-lg font-semibold text-orange-900 mb-2">
+                    {selectedNode.title}
+                  </h3>
+                  <div className="space-y-3">
+                    <p className="text-orange-700">{selectedNode.description}</p>
+                    
+                    {!selectedNode.isCompleted && (
+                      <>
+                        <div className="flex items-center gap-2 bg-orange-100 p-2 rounded">
+                          <RiTimeLine className="w-5 h-5 text-orange-600" />
+                          <div>
+                            <p className="text-sm font-medium text-orange-800">Target Completion:</p>
+                            <p className="text-xs text-orange-700">
+                              {getProjectedDate(selectedNode.timeRequired)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="bg-orange-100 p-2 rounded space-y-2">
+                          <div className="flex items-center gap-2">
+                            <RiMedalLine className="w-5 h-5 text-orange-600" />
+                            <p className="text-sm font-medium text-orange-800">Projected Achievements:</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-white p-2 rounded">
+                              <p className="text-xs text-orange-800">New Mudras</p>
+                              <p className="text-lg font-semibold text-orange-600">+{selectedNode.projectedStats?.mudras || 0}</p>
+                            </div>
+                            <div className="bg-white p-2 rounded">
+                              <p className="text-xs text-orange-800">New Dances</p>
+                              <p className="text-lg font-semibold text-orange-600">+{selectedNode.projectedStats?.dances || 0}</p>
+                            </div>
+                            <div className="bg-white p-2 rounded">
+                              <p className="text-xs text-orange-800">New Poses</p>
+                              <p className="text-lg font-semibold text-orange-600">+{selectedNode.projectedStats?.poses || 0}</p>
+                            </div>
+                            <div className="bg-white p-2 rounded">
+                              <p className="text-xs text-orange-800">Guru Score</p>
+                              <p className="text-lg font-semibold text-orange-600">+{selectedNode.projectedStats?.score || 0}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                      <RiLightbulbLine className="w-5 h-5 text-orange-600" />
+                      <p className="text-sm text-orange-800">Recommended next steps:</p>
+                    </div>
+                    <ul className="list-disc list-inside text-sm text-orange-700 space-y-1">
+                      {selectedNode.recommendations.map((rec, index) => (
+                        <li key={index}>{rec}</li>
+                      ))}
+                    </ul>
+                    {selectedNode.isCompleted ? (
+                      <div className="flex items-center gap-2 text-green-600">
+                        <RiMedalLine className="w-5 h-5" />
+                        <span className="text-sm font-medium">Completed!</span>
+                      </div>
+                    ) : (
+                      <>
+                        {selectedNode.currentProgress && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-orange-800">Current Progress</p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-orange-100 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                                  style={{ width: `${selectedNode.currentProgress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-medium text-orange-600">
+                                {selectedNode.currentProgress}%
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        <Link 
+                          to={selectedNode.practiceLink} 
+                          className="btn btn-sm bg-orange-600 hover:bg-orange-700 text-white border-none w-full mt-2"
+                        >
+                          Practice Now
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              ) : (
+                <div className="text-center text-orange-700 py-8">
+                  <RiRoadMapLine className="w-12 h-12 mx-auto text-orange-400 mb-2" />
+                  <p>Click on any milestone to see details and recommendations</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
