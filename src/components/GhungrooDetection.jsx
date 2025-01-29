@@ -7,10 +7,14 @@ const GhungrooDetection = () => {
   const [testStarted, setTestStarted] = useState(false);
   const [detectionPercentage, setDetectionPercentage] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [hasFailedOnce, setHasFailedOnce] = useState(false);
   const webcamRef = useRef(null);
 
   const handleSliderChange = (e) => {
     setSliderValue(e.target.value);
+    if (e.target.value === "1") {
+      setHasFailedOnce(false);
+    }
   };
 
   const handleStartTest = async () => {
@@ -18,34 +22,43 @@ const GhungrooDetection = () => {
     setShowSuccess(false);
     setDetectionPercentage(0);
 
-    const testDuration = sliderValue === "2" ? 20000 : 10000; // Adjust test duration based on slider value
-    const successThreshold = sliderValue === "2" ? 90 : 80; // Success percentage threshold
+    const testDuration = sliderValue === "2" ? 20000 : 10000;
+    const successThreshold = sliderValue === "2" ? 90 : 80;
+    const failureThreshold = 50;
 
-    // Wait for 5 seconds before starting detection
     setTimeout(() => {
       let percentage = 35;
       const detectionInterval = setInterval(() => {
+        if (sliderValue === "2" && !hasFailedOnce && percentage >= failureThreshold && percentage < failureThreshold + 2) {
+          clearInterval(detectionInterval);
+          setDetectionPercentage(Math.round(percentage));
+          setShowSuccess(false);
+          setHasFailedOnce(true);
+          return;
+        }
+
         if (percentage < successThreshold) {
-          percentage += Math.random() * (successThreshold - 35) / (testDuration / 1000); // Gradually increase percentage
+          percentage += Math.random() * (successThreshold - 35) / (testDuration / 1000);
         } else if (percentage >= successThreshold && percentage <= 100) {
-          percentage += Math.random() * 0.5; // Gradually increase percentage until 100
+          percentage += Math.random() * 0.5;
         }
 
         setDetectionPercentage(Math.round(percentage));
 
         if (percentage >= successThreshold) {
-          // Show success after maintaining above threshold for 4 seconds
           setTimeout(() => {
             if (percentage >= successThreshold) {
               setShowSuccess(true);
-              setSliderValue("2"); // Automatically switch to 2 after success
+              if (sliderValue === "1") {
+                setSliderValue("2");
+              }
             }
-          }, 4000); // Success after maintaining for 4 seconds
+          }, 2000);
           clearInterval(detectionInterval);
         }
-      }, 600); // Update detection percentage every 600 ms
+      }, 700);
 
-    }, 5000); // Wait 5 seconds before starting the detection process
+    }, 3000);
   };
 
   useEffect(() => {
@@ -70,11 +83,15 @@ const GhungrooDetection = () => {
           }}
           className="rounded-lg shadow-lg"
         />
-        {showSuccess && (
+        {showSuccess ? (
           <div className="absolute top-0 left-0 w-full h-full bg-green-500 opacity-75 flex items-center justify-center">
             <h1 className="text-white text-4xl font-bold">Success</h1>
           </div>
-        )}
+        ) : (sliderValue === "2" && !hasFailedOnce && detectionPercentage >= 50 && detectionPercentage < 52) ? (
+          <div className="absolute top-0 left-0 w-full h-full bg-red-500 opacity-75 flex items-center justify-center">
+            <h1 className="text-white text-4xl font-bold">Failed</h1>
+          </div>
+        ) : null}
       </div>
 
       {/* Right Side: Controls and Feedback */}

@@ -1,20 +1,157 @@
 import { useState, useEffect, useRef } from 'react';
 import { RiCameraLine, RiArrowRightLine } from 'react-icons/ri';
+import Webcam from 'react-webcam';
+
+const GhungrooDetectionUI = () => {
+  const [sliderValue, setSliderValue] = useState(1);
+  const [beatSync, setBeatSync] = useState(0);
+  const [testStarted, setTestStarted] = useState(false);
+  const [detectionPercentage, setDetectionPercentage] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [hasFailedOnce, setHasFailedOnce] = useState(false);
+  const webcamRef = useRef(null);
+
+  const handleSliderChange = (e) => {
+    setSliderValue(e.target.value);
+    if (e.target.value === "1") {
+      setHasFailedOnce(false);
+    }
+  };
+
+  const handleStartTest = async () => {
+    setTestStarted(true);
+    setShowSuccess(false);
+    setDetectionPercentage(0);
+
+    const testDuration = sliderValue === "2" ? 20000 : 10000;
+    const successThreshold = sliderValue === "2" ? 90 : 80;
+    const failureThreshold = 50;
+
+    setTimeout(() => {
+      let percentage = 35;
+      const detectionInterval = setInterval(() => {
+        if (sliderValue === "2" && !hasFailedOnce && percentage >= failureThreshold && percentage < failureThreshold + 2) {
+          clearInterval(detectionInterval);
+          setDetectionPercentage(Math.round(percentage));
+          setShowSuccess(false);
+          setHasFailedOnce(true);
+          return;
+        }
+
+        if (percentage < successThreshold) {
+          percentage += Math.random() * (successThreshold - 35) / (testDuration / 1000);
+        } else if (percentage >= successThreshold && percentage <= 100) {
+          percentage += Math.random() * 0.5;
+        }
+
+        setDetectionPercentage(Math.round(percentage));
+
+        if (percentage >= successThreshold) {
+          setTimeout(() => {
+            if (percentage >= successThreshold) {
+              setShowSuccess(true);
+              if (sliderValue === "1") {
+                setSliderValue("2");
+              }
+            }
+          }, 2000);
+          clearInterval(detectionInterval);
+        }
+      }, 700);
+    }, 3000);
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Left Side: Webcam */}
+      <div className="lg:col-span-2">
+        <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+          <Webcam
+            audio={false}
+            ref={webcamRef}
+            screenshotFormat="image/jpeg"
+            videoConstraints={{
+              facingMode: "user",
+            }}
+            className="w-full h-full object-cover rounded-lg"
+          />
+          {showSuccess ? (
+            <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-4 shadow-lg animate-bounce">
+                <h3 className="text-green-600 font-bold text-xl">Success!</h3>
+                <p className="text-gray-600">Great rhythm and timing!</p>
+              </div>
+            </div>
+          ) : (sliderValue === "2" && !hasFailedOnce && detectionPercentage >= 50 && detectionPercentage < 52) ? (
+            <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-4 shadow-lg">
+                <h3 className="text-red-600 font-bold text-xl">Keep Practicing</h3>
+                <p className="text-gray-600">Try to maintain the rhythm</p>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Right Side: Controls and Feedback */}
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-lg shadow-lg space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Tattadavu Practice</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Form: {sliderValue === "1" ? "1" : "2"}
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="2"
+                  value={sliderValue}
+                  onChange={handleSliderChange}
+                  className="w-full h-2 bg-orange-200 rounded-full appearance-none cursor-pointer"
+                />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-800">Detection Progress</h3>
+                <div className="relative pt-1">
+                  <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-orange-200">
+                    <div
+                      style={{ width: `${detectionPercentage}%` }}
+                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500 transition-all duration-500"
+                    />
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-semibold inline-block text-orange-600">
+                      {detectionPercentage}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleStartTest}
+                className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors font-medium"
+              >
+                {testStarted ? "Restart Test" : "Start Test"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function DancePractice() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [showCamera, setShowCamera] = useState(false);
-  const [isCameraOn, setIsCameraOn] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [feedback, setFeedback] = useState([]);
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
+  const [showGhungroo, setShowGhungroo] = useState(false);
   const tutorialVideoRef = useRef(null);
 
   const danceVideos = [
     {
       id: 1,
-      title: "Thatta Adavu",
+      title: "Tattadavu",
       src: "/1.mp4",
       description: "Basic stepping movements in Bharatanatyam"
     },
@@ -37,64 +174,9 @@ export default function DancePractice() {
       setCurrentVideoIndex(prev => prev + 1);
     } else {
       setShowCamera(true);
+      setShowGhungroo(true);
     }
   };
-
-  const toggleCamera = async () => {
-    if (isCameraOn) {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => {
-          track.stop();
-          streamRef.current.removeTrack(track);
-        });
-        streamRef.current = null;
-      }
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-      setIsCameraOn(false);
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          streamRef.current = stream;
-        }
-        setIsCameraOn(true);
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-      }
-    }
-  };
-
-  useEffect(() => {
-    // Cleanup camera on component unmount
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => {
-          track.stop();
-          streamRef.current?.removeTrack(track);
-        });
-        streamRef.current = null;
-      }
-    };
-  }, []);
-
-  // Mock function to simulate AI feedback
-  useEffect(() => {
-    if (isRecording) {
-      const interval = setInterval(() => {
-        const newFeedback = {
-          timestamp: new Date().toLocaleTimeString(),
-          message: "Good form! Keep your movements precise and rhythmic.",
-          type: "improvement"
-        };
-        setFeedback(prev => [newFeedback, ...prev].slice(0, 5));
-      }, 3000);
-
-      return () => clearInterval(interval);
-    }
-  }, [isRecording]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -104,122 +186,60 @@ export default function DancePractice() {
             <h1 className="text-3xl font-bold text-orange-900">Dance Practice</h1>
             <p className="text-orange-700">Master the fundamental steps of Bharatanatyam</p>
           </div>
-          {showCamera && (
-            <button 
-              className={`px-6 py-2 rounded-lg ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'} text-white transition-colors`}
-              onClick={() => setIsRecording(!isRecording)}
-            >
-              {isRecording ? 'Stop Practice' : 'Start Practice'}
-            </button>
-          )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Video/Camera Feed */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-              {!showCamera ? (
+        {!showGhungroo ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Video Feed */}
+            <div className="lg:col-span-2">
+              <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
                 <video
                   ref={tutorialVideoRef}
                   src={danceVideos[currentVideoIndex].src}
                   controls
                   className="w-full h-full object-cover"
                 />
-              ) : isCameraOn ? (
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-900">
-                  <p className="text-white text-lg">Camera is turned off</p>
-                </div>
-              )}
-
-              {/* Overlay Controls */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-4">
-                    {showCamera && (
-                      <button 
-                        className="text-white hover:text-orange-400"
-                        onClick={toggleCamera}
-                      >
-                        <RiCameraLine className={`w-6 h-6 ${!isCameraOn && 'opacity-50'}`} />
-                      </button>
-                    )}
-                  </div>
-                </div>
               </div>
             </div>
 
-            {/* Real-time Feedback */}
-            {showCamera && (
-              <div className="space-y-2">
-                {feedback.map((item, index) => (
-                  <div 
-                    key={index}
-                    className={`p-3 rounded-lg ${
-                      item.type === 'success' ? 'bg-green-100 text-green-800' :
-                      item.type === 'correction' ? 'bg-red-100 text-red-800' :
-                      'bg-orange-100 text-orange-800'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{item.message}</span>
-                      <span className="text-xs opacity-70 ml-auto">{item.timestamp}</span>
-                    </div>
-                  </div>
-                ))}
+            {/* Side Panel */}
+            <div className="space-y-6">
+              {/* Current Dance Info */}
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  {danceVideos[currentVideoIndex].title}
+                </h2>
+                <p className="text-gray-600 mb-6">{danceVideos[currentVideoIndex].description}</p>
+                <button
+                  onClick={handleNextVideo}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  {currentVideoIndex === danceVideos.length - 1 ? 'Start Practice' : 'Next Video'}
+                  <RiArrowRightLine className="w-5 h-5" />
+                </button>
               </div>
-            )}
-          </div>
 
-          {/* Side Panel */}
-          <div className="space-y-6">
-            {/* Current Dance Info */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                {showCamera ? "Practice Mode" : danceVideos[currentVideoIndex].title}
-              </h2>
-              {!showCamera && (
-                <>
-                  <p className="text-gray-600 mb-6">{danceVideos[currentVideoIndex].description}</p>
-                  <button
-                    onClick={handleNextVideo}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                  >
-                    {currentVideoIndex === danceVideos.length - 1 ? 'Start Practice' : 'Next Video'}
-                    <RiArrowRightLine className="w-5 h-5" />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Progress */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Progress</h2>
-              <div className="flex items-center gap-2">
-                {danceVideos.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-3 h-3 rounded-full ${
-                      index === currentVideoIndex ? 'bg-orange-500' :
-                      index < currentVideoIndex ? 'bg-green-500' :
-                      'bg-gray-200'
-                    }`}
-                  />
-                ))}
-                {showCamera && (
-                  <div className="w-3 h-3 rounded-full bg-orange-500" />
-                )}
+              {/* Progress */}
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Progress</h2>
+                <div className="flex items-center gap-2">
+                  {danceVideos.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-3 h-3 rounded-full ${
+                        index === currentVideoIndex ? 'bg-orange-500' :
+                        index < currentVideoIndex ? 'bg-green-500' :
+                        'bg-gray-200'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <GhungrooDetectionUI />
+        )}
       </div>
     </div>
   );

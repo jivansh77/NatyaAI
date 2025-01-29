@@ -48,7 +48,7 @@ const CulturalFactPopup = () => {
     const timer = setTimeout(() => {
       fetchFact(); // Fetch fact from backend
       setShowPopup(true);
-    }, 300); // 2 minutes = 120000ms
+    }, 120000); // 2 minutes = 120000ms
 
     return () => clearTimeout(timer); // Cleanup on unmount
   }, []);
