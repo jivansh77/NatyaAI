@@ -18,7 +18,7 @@ const Timeline = () => {
       year: "2nd Century BCE",
       title: "Ancient Origins",
       description: "Bharatanatyam's roots trace back to the ancient Sanskrit text 'Natya Shastra' by Bharata Muni, establishing the foundation of Indian classical dance.",
-      image: "/public/images/ancient-origins.jpg",
+      image: "bharat-ancient.jpg",
       details: "The Natya Shastra comprehensively covers all aspects of classical dance, including hand gestures (mudras), facial expressions (abhinaya), and body movements.",
       category: "Origins"
     },
@@ -26,7 +26,7 @@ const Timeline = () => {
       year: "6th-12th Century CE",
       title: "Temple Dance Tradition",
       description: "Flourishing period of the Devadasi system in South Indian temples, particularly during the Chola dynasty.",
-      image: "/public/images/temple-dance.jpg",
+      image: "temple-dance.jpg",
       details: "Devadasis were dedicated temple dancers who preserved and evolved the art form through generations.",
       category: "Evolution"
     },
@@ -34,7 +34,7 @@ const Timeline = () => {
       year: "20th Century",
       title: "Modern Revival",
       description: "The renaissance of Bharatanatyam through pioneers like Rukmini Devi Arundale, who established Kalakshetra.",
-      image: "/public/images/modern-revival.jpg",
+      image: "modern-revival.jpg",
       details: "This period marked the transformation of Bharatanatyam from a temple art to a globally recognized classical dance form.",
       category: "Modern Era"
     }

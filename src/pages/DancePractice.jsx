@@ -62,78 +62,78 @@ const GhungrooDetectionUI = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left Side: Webcam */}
-      <div className="lg:col-span-2">
-        <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-          <Webcam
-            audio={false}
-            ref={webcamRef}
-            screenshotFormat="image/jpeg"
-            videoConstraints={{
-              facingMode: "user",
-            }}
-            className="w-full h-full object-cover rounded-lg"
-          />
-          {showSuccess ? (
-            <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
-              <div className="bg-white rounded-lg p-4 shadow-lg animate-bounce">
-                <h3 className="text-green-600 font-bold text-xl">Success!</h3>
-                <p className="text-gray-600">Great rhythm and timing!</p>
-              </div>
-            </div>
-          ) : (sliderValue === "2" && !hasFailedOnce && detectionPercentage >= 50 && detectionPercentage < 52) ? (
-            <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
-              <div className="bg-white rounded-lg p-4 shadow-lg">
-                <h3 className="text-red-600 font-bold text-xl">Keep Practicing</h3>
-                <p className="text-gray-600">Try to maintain the rhythm</p>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Right Side: Controls and Feedback */}
-      <div className="space-y-6">
-        <div className="bg-white p-6 rounded-lg shadow-lg space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Tattadavu Practice</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Form: {sliderValue === "1" ? "1" : "2"}
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="2"
-                  value={sliderValue}
-                  onChange={handleSliderChange}
-                  className="w-full h-2 bg-orange-200 rounded-full appearance-none cursor-pointer"
-                />
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-800">Detection Progress</h3>
-                <div className="relative pt-1">
-                  <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-orange-200">
-                    <div
-                      style={{ width: `${detectionPercentage}%` }}
-                      className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500 transition-all duration-500"
-                    />
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-semibold inline-block text-orange-600">
-                      {detectionPercentage}%
-                    </span>
-                  </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Side: Webcam */}
+        <div className="lg:col-span-2">
+          <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+            <Webcam
+              audio={false}
+              ref={webcamRef}
+              screenshotFormat="image/jpeg"
+              videoConstraints={{
+                facingMode: "user",
+              }}
+              className="w-full h-full object-cover rounded-lg"
+            />
+            {showSuccess ? (
+              <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+                <div className="bg-white rounded-lg p-4 shadow-lg animate-bounce">
+                  <h3 className="text-green-600 font-bold text-xl">Success!</h3>
+                  <p className="text-gray-600">Great rhythm and timing!</p>
                 </div>
               </div>
-              <button
-                onClick={handleStartTest}
-                className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors font-medium"
-              >
-                {testStarted ? "Restart Test" : "Start Test"}
-              </button>
+            ) : (sliderValue === "2" && !hasFailedOnce && detectionPercentage >= 50 && detectionPercentage < 52) ? (
+              <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
+                <div className="bg-white rounded-lg p-4 shadow-lg">
+                  <h3 className="text-red-600 font-bold text-xl">Keep Practicing</h3>
+                  <p className="text-gray-600">Try to maintain the rhythm</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Right Side: Controls and Feedback */}
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-lg shadow-lg space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Tattadavu Practice</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Form: {sliderValue === "1" ? "1" : "2"}
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="2"
+                    value={sliderValue}
+                    onChange={handleSliderChange}
+                    className="w-full h-2 bg-orange-200 rounded-full appearance-none cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800">Detection Progress</h3>
+                  <div className="relative pt-1">
+                    <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-orange-200">
+                      <div
+                        style={{ width: `${detectionPercentage}%` }}
+                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500 transition-all duration-500"
+                      />
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-semibold inline-block text-orange-600">
+                        {detectionPercentage}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleStartTest}
+                  className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                >
+                  {testStarted ? "Restart Test" : "Start Test"}
+                </button>
             </div>
           </div>
         </div>
