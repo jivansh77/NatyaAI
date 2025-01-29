@@ -20,7 +20,15 @@ export default function SignIn() {
     
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      navigate('/dashboard');
+      const user = userCredential.user;
+
+      // Check if user has filled out the form
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (!userDoc.exists() || !userDoc.data().danceProfile) {
+        navigate('/form'); // Redirect to Form page if not filled
+      } else {
+        navigate('/dashboard'); // Redirect to dashboard if already filled
+      }
     } catch (error) {
       setError('Failed to sign in. Please check your credentials.');
       console.error(error);
