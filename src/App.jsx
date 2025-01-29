@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import PracticeStudio from './pages/PracticeStudio'
 import MudraPractice from './pages/MudraPractice'
 import DancePractice from './pages/DancePractice'
+import PosePractice from './pages/PosePractice'
 import Timeline from './pages/Timeline'
 import NatyaSangam from './pages/NatyaSangam'
 import Achievements from './pages/Achievements'
@@ -28,6 +29,7 @@ const AppContent = () => {
           <Route path="/practice-studio" element={<PracticeStudio />} />
           <Route path="/practice/mudra" element={<MudraPractice />} />
           <Route path="/practice/dance" element={<DancePractice />} />
+          <Route path="/practice/pose" element={<PosePractice />} />
           <Route path="/timeline" element={<Timeline />} />
           <Route path="/natya-sangam" element={<NatyaSangam />} />
           <Route path="/achievements" element={<Achievements />} />

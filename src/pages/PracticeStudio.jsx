@@ -137,6 +137,8 @@ export default function PracticeStudio() {
       navigate('/practice/mudra');
     } else if (categoryId === 'dance') {
       navigate('/practice/dance');
+    } else if (categoryId === 'pose') {
+      navigate('/practice/pose');
     }
   };
 

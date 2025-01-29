@@ -1,0 +1,10 @@
+mediapipe==0.10.9
+opencv-python==4.9.0.80
+Pillow==10.2.0
+gTTS==2.5.1
+pygame==2.5.2
+SpeechRecognition==3.10.1
+numpy==1.26.3
+flask==3.0.1
+flask-cors==4.0.0
+urllib3<2.0.0 
