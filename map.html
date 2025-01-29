@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Dance Map of India with Events</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { 
+            margin: 0; 
+            font-family: 'Georgia', serif; 
+            background-color: #f5f2dc; 
+        }
+        #map { 
+            height: 60vh;
+            margin-bottom: 2rem; 
+        }
+        .leaflet-popup-content { 
+            text-align: center; 
+            font-size: 14px; 
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: none;
+        }
+        .card.active {
+            display: block;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+        .card .state {
+            color: #2563eb;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .card .description {
+            color: #666;
+            line-height: 1.5;
+        }
+        .coordinates {
+            margin-top: 12px;
+            font-size: 0.875rem;
+            color: #888;
+        }
+
+        /* Events Section Styles */
+        .events-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .events-header {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .search-container {
+            flex: 1;
+            position: relative;
+        }
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            padding-left: 32px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .search-icon {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        .dance-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            padding: 16px 0;
+        }
+        .event-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            background: #f8f9fa;
+        }
+        .event-title {
+            color: #2563eb;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .event-details {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .event-price {
+            color: #16a34a;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .book-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .book-button:hover {
+            background: #1d4ed8;
+        }
+        .no-events {
+            text-align: center;
+            color: #666;
+            padding: 32px;
+        }
+        body { 
+            margin: 0; 
+            font-family: 'Georgia', serif; 
+            background-color: #f5f2dc; 
+        }
+        #map { 
+            height: 60vh;
+            margin-bottom: 2rem; 
+        }
+        .leaflet-popup-content { 
+            text-align: center; 
+            font-size: 14px; 
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            position: relative; /* Added for absolute positioning of cards */
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: none;
+            position: absolute; /* Changed to absolute */
+            z-index: 1000; /* Ensure it appears above map */
+            width: 300px; /* Fixed width */
+            top: -20px; /* Position above the grid */
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .card.active {
+            display: block;
+        }
+        .card:hover {
+            transform: translateX(-50%) translateY(-5px); /* Modified for centered hover effect */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+        .card .state {
+            color: #2563eb;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .card .description {
+            color: #666;
+            line-height: 1.5;
+        }
+        .coordinates {
+            margin-top: 12px;
+            font-size: 0.875rem;
+            color: #888;
+        }
+
+        /* Events Section Styles remain the same */
+        .events-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .event-marker {
+    background-color: #ff4444;
+    border: 2px solid white;
+    border-radius: 50%;
+    text-align: center;
+}
+
+.event-popup {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.event-popup .event-title {
+    font-weight: bold;
+    color: #2563eb;
+    margin-bottom: 5px;
+}
+
+.event-popup .event-date {
+    color: #16a34a;
+    margin-bottom: 3px;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="map"></div>
+        <div class="cards-grid">
+            <div class="card" id="card-bharatanatyam">
+                <h3>Bharatanatyam</h3>
+                <div class="state">Tamil Nadu</div>
+                <div class="description">One of the oldest classical dance forms of India, Bharatanatyam originated in Tamil Nadu. It is known for its grace, purity, tenderness, and sculptures-like poses.</div>
+                <div class="coordinates">Coordinates: 10.8505, 78.6921</div>
+            </div>
+            <div class="card" id="card-kathak">
+                <h3>Kathak</h3>
+                <div class="state">Uttar Pradesh</div>
+                <div class="description">Kathak is one of the major forms of Indian classical dance. The word Kathak is derived from katha, meaning 'the art of storytelling.'</div>
+                <div class="coordinates">Coordinates: 26.8467, 80.9462</div>
+            </div>
+            <div class="card" id="card-odissi">
+                <h3>Odissi</h3>
+                <div class="state">Odisha</div>
+                <div class="description">Odissi is a major ancient Indian classical dance that originated in the temples of Odisha. It is known for its fluid movements and strong storytelling elements.</div>
+                <div class="coordinates">Coordinates: 20.9517, 85.0985</div>
+            </div>
+            <div class="card" id="card-manipuri">
+                <h3>Manipuri</h3>
+                <div class="state">Manipur</div>
+                <div class="description">Manipuri dance is one of the major Indian classical dance forms. It is characterized by gentle, graceful movements and is often performed to narrate scenes from Krishna's life.</div>
+                <div class="coordinates">Coordinates: 24.8170, 93.9368</div>
+            </div>
+            <div class="card" id="card-garba">
+                <h3>Garba</h3>
+                <div class="state">Gujarat</div>
+                <div class="description">Garba is a traditional folk dance form originating from Gujarat. It is performed during Navratri and involves rhythmic movements in a circular pattern.</div>
+                <div class="coordinates">Coordinates: 22.2587, 71.1924</div>
+            </div>
+            <div class="card" id="card-bhangra">
+                <h3>Bhangra</h3>
+                <div class="state">Punjab</div>
+                <div class="description">Bhangra is a lively folk dance from Punjab, traditionally associated with the harvest season. It is known for its energetic moves and vibrant music.</div>
+                <div class="coordinates">Coordinates: 31.1471, 75.3412</div>
+            </div>
+        </div>
+        
+        <div class="events-section">
+            <h2>Upcoming Dance Performances</h2>
+            <div class="events-header">
+                <div class="search-container">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchEvents" class="search-input" placeholder="Search events or venues...">
+                </div>
+                <select id="danceSelect" class="dance-select">
+                    <option value="">Select Dance Form</option>
+                    <option value="bharatanatyam">Bharatanatyam</option>
+                    <option value="kathak">Kathak</option>
+                    <option value="odissi">Odissi</option>
+                    <option value="manipuri">Manipuri</option>
+                    <option value="garba">Garba</option>
+                    <option value="bhangra">Bhangra</option>
+                </select>
+            </div>
+            <div id="eventsGrid" class="events-grid">
+                <!-- Events will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Initialize map (your existing map code)
+        var map = L.map('map').setView([22.3511, 78.6677], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: ''
+        }).addTo(map);
+        
+        // Your existing dances data
+        var dances = [
+            { name: "Bharatanatyam", state: "Tamil Nadu", coords: [10.8505, 78.6921], cardId: "card-bharatanatyam" },
+            { name: "Kathak", state: "Uttar Pradesh", coords: [26.8467, 80.9462], cardId: "card-kathak" },
+            { name: "Odissi", state: "Odisha", coords: [20.9517, 85.0985], cardId: "card-odissi" },
+            { name: "Manipuri", state: "Manipur", coords: [24.8170, 93.9368], cardId: "card-manipuri" },
+            { name: "Garba", state: "Gujarat", coords: [22.2587, 71.1924], cardId: "card-garba" },
+            { name: "Bhangra", state: "Punjab", coords: [31.1471, 75.3412], cardId: "card-bhangra" }
+        ];
+        // Add this after map initialization
+function addEventMarkers() {
+    // Create custom icon for events
+    const eventIcon = L.divIcon({
+        className: 'event-marker',
+        html: '🎭',
+        iconSize: [25, 25]
+    });
+
+    // Clear existing event markers if any
+    if (window.eventMarkers) {
+        window.eventMarkers.forEach(marker => marker.remove());
+    }
+    window.eventMarkers = [];
+
+    // Add markers for all events
+    Object.values(eventsData).forEach(danceEvents => {
+        danceEvents.forEach(event => {
+            const marker = L.marker(event.coords, {icon: eventIcon})
+                .bindPopup(`
+                    <div class="event-popup">
+                        <div class="event-title">${event.title}</div>
+                        <div class="event-date">${formatDate(event.date)}</div>
+                        <div>${event.venue}</div>
+                        <div><strong>${event.price}</strong></div>
+                    </div>
+                `, {
+                    className: 'event-popup'
+                });
+            
+            // Show popup on hover
+            marker.on('mouseover', function (e) {
+                this.openPopup();
+            });
+            
+            marker.on('mouseout', function (e) {
+                this.closePopup();
+            });
+
+            marker.addTo(map);
+            window.eventMarkers.push(marker);
+        });
+    });
+}
+
+        // Mock events data
+// Replace your existing eventsData with this
+const eventsData = {
+    bharatanatyam: [
+        { 
+            id: 1, 
+            title: "Classical Night: Bharatanatyam", 
+            date: "2025-02-15", 
+            venue: "Chennai Music Academy", 
+            price: "₹500",
+            coords: [13.0327, 80.2707] // Chennai coordinates
+        },
+        { 
+            id: 2, 
+            title: "Temple Dance Festival", 
+            date: "2025-03-01", 
+            venue: "Thanjavur Temple", 
+            price: "₹300",
+            coords: [10.7870, 79.1378] // Thanjavur coordinates
+        }
+    ],
+    kathak: [
+        { 
+            id: 3, 
+            title: "Kathak Utsav", 
+            date: "2025-02-20", 
+            venue: "Lucknow Sangeet Sabha", 
+            price: "₹400",
+            coords: [26.8467, 80.9462] // Lucknow coordinates
+        },
+        { 
+            id: 4, 
+            title: "Rhythm & Grace", 
+            date: "2025-03-10", 
+            venue: "Ghanshyam Auditorium, Varanasi", 
+            price: "₹450",
+            coords: [25.3176, 82.9739] // Varanasi coordinates
+        }
+    ],
+    // Add coordinates for other events similarly...
+};
+
+        // Add markers to map
+        dances.forEach(dance => {
+            L.marker(dance.coords).addTo(map)
+            .bindPopup(`<b>${dance.name}</b><br>${dance.state}`)
+            .on('click', function() {
+                // Hide all cards
+                document.querySelectorAll('.card').forEach(card => {
+                    card.classList.remove('active');
+                });
+                // Show the selected card
+                document.getElementById(dance.cardId).classList.add('active');
+                // Update events section
+                document.getElementById('danceSelect').value = dance.name.toLowerCase();
+                updateEvents();
+            });
+        });
+
+        // Format date function
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-IN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Update events display
+        function updateEvents() {
+            const searchQuery = document.getElementById('searchEvents').value.toLowerCase();
+            const selectedDance = document.getElementById('danceSelect').value;
+            const eventsGrid = document.getElementById('eventsGrid');
+            
+            eventsGrid.innerHTML = '';
+
+            if (!selectedDance) {
+                eventsGrid.innerHTML = '<div class="no-events">Please select a dance form to view upcoming events</div>';
+                return;
+            }
+
+            const events = eventsData[selectedDance] || [];
+            const filteredEvents = events.filter(event => 
+                event.title.toLowerCase().includes(searchQuery) ||
+                event.venue.toLowerCase().includes(searchQuery)
+            );
+
+            if (filteredEvents.length === 0) {
+                eventsGrid.innerHTML = '<div class="no-events">No events found matching your search</div>';
+                return;
+            }
+
+            filteredEvents.forEach(event => {
+                const eventElement = document.createElement('div');
+                eventElement.className = 'event-card';
+                eventElement.innerHTML = `
+                    <div class="event-title">${event.title}</div>
+                    <div class="event-details">${formatDate(event.date)}</div>
+                    <div class="event-details">${event.venue}</div>
+                    <div class="event-price">${event.price}</div>
+                    <button class="book-button" onclick="alert('Booking system coming soon!')">Book Now</button>
+                `;
+                eventsGrid.appendChild(eventElement);
+            });
+        }
+
+        // Add event listeners
+        document.getElementById('searchEvents').addEventListener('input', updateEvents);
+        document.getElementById('danceSelect').addEventListener('change', updateEvents);
+        // Add this after creating the map
+addEventMarkers();
+        // Initial events update
+        updateEvents();
+    </script>
+</body>
+</html>
