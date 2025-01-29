@@ -133,9 +133,10 @@ export default function PracticeStudio() {
 
   const handleCategoryClick = (categoryId) => {
     setSelectedCategory(categoryId);
-    // For now, we'll implement the mudra practice camera view
     if (categoryId === 'mudra') {
       navigate('/practice/mudra');
+    } else if (categoryId === 'dance') {
+      navigate('/practice/dance');
     }
   };
 
