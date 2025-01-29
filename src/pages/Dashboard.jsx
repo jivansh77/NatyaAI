@@ -35,18 +35,58 @@ export default function Dashboard() {
       progress: 53,
       trend: '+3',
       timeLeft: '8 days'
-    },
-    {
-      id: 3,
-      name: 'Guru Score',
-      current: 750,
-      target: 1000,
-      unit: '',
-      progress: 75,
-      trend: '+25',
-      timeLeft: '8 days'
     }
   ]);
+
+  const [guruScore, setGuruScore] = useState({
+    id: 3,
+    name: 'Guru Score',
+    current: 0,
+    target: 1000,
+    unit: '',
+    progress: 0,
+    trend: '+0',
+    timeLeft: '8 days'
+  });
+
+  useEffect(() => {
+    const fetchGuruScore = async () => {
+      if (!user) return;
+
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists() && userDoc.data().achievements) {
+          const achievements = userDoc.data().achievements;
+          const totalPoints = achievements.reduce((total, achievement) => total + (achievement.points || 0), 0);
+          
+          // Calculate progress percentage
+          const progress = Math.min(Math.round((totalPoints / 1000) * 100), 100);
+          
+          // Calculate trend (sum of points from achievements in the last 7 days)
+          const lastWeekAchievements = achievements.filter(a => {
+            const achievementDate = new Date(a.earnedAt);
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            return achievementDate > weekAgo;
+          });
+          const recentPoints = lastWeekAchievements.reduce((total, achievement) => total + (achievement.points || 0), 0);
+
+          setGuruScore(prev => ({
+            ...prev,
+            current: totalPoints,
+            progress: progress,
+            trend: `+${recentPoints}`
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching guru score:', error);
+      }
+    };
+
+    fetchGuruScore();
+  }, [user]);
 
   const upcomingSessions = [
     {
@@ -110,7 +150,7 @@ export default function Dashboard() {
 
       {/* Learning Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {learningStats.map((stat) => (
+        {[...learningStats, guruScore].map((stat) => (
           <div key={stat.id} className="card bg-white shadow-lg">
             <div className="card-body">
               <div className="flex justify-between items-center mb-2">
@@ -121,7 +161,7 @@ export default function Dashboard() {
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-orange-800">Current: {stat.unit}{stat.current}</span>
                 <span className="text-orange-800">Target: {stat.unit}{stat.target}</span>
-                </div>
+              </div>
 
               <div className="w-full h-3 bg-orange-100 rounded-full mb-2">
                 <div 

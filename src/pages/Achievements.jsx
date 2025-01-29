@@ -1,54 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RiMedalLine, RiTrophyLine, RiStarLine, RiFireLine } from 'react-icons/ri';
 import { GiLotus, GiPeaceDove, GiMusicalNotes, GiFootprint } from 'react-icons/gi';
+import { auth, db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 export default function Achievements() {
+  const [user] = useAuthState(auth);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [userAchievements, setUserAchievements] = useState([]);
+  const [totalPoints, setTotalPoints] = useState(0);
+
+  useEffect(() => {
+    const fetchAchievements = async () => {
+      if (!user) return;
+
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists() && userDoc.data().achievements) {
+          const achievements = userDoc.data().achievements;
+          setUserAchievements(achievements);
+          
+          // Calculate total points
+          const points = achievements.reduce((total, achievement) => total + (achievement.points || 0), 0);
+          setTotalPoints(points);
+        }
+      } catch (error) {
+        console.error('Error fetching achievements:', error);
+      }
+    };
+
+    fetchAchievements();
+  }, [user]);
 
   const categories = [
     { id: 'all', name: 'All Achievements', icon: RiTrophyLine },
     { id: 'mudras', name: 'Mudras', icon: GiPeaceDove },
     { id: 'poses', name: 'Dance Poses', icon: GiLotus },
     { id: 'performances', name: 'Performances', icon: GiMusicalNotes },
-  ];
-
-  const achievements = [
-    {
-      id: 1,
-      name: "Mudra Master",
-      description: "Mastered 25 basic hand gestures",
-      category: "mudras",
-      progress: 80,
-      current: 20,
-      target: 25,
-      icon: GiPeaceDove,
-      rarity: "rare",
-      unlockedAt: "2024-02-15"
-    },
-    {
-      id: 2,
-      name: "Rhythm Virtuoso",
-      description: "Maintained perfect rhythm for 10 consecutive sequences",
-      category: "performances",
-      progress: 100,
-      current: 10,
-      target: 10,
-      icon: GiMusicalNotes,
-      rarity: "epic",
-      unlockedAt: "2024-02-10"
-    },
-    {
-      id: 3,
-      name: "Pose Perfect",
-      description: "Achieved 95% accuracy in basic poses",
-      category: "poses",
-      progress: 60,
-      current: 57,
-      target: 95,
-      icon: GiLotus,
-      rarity: "common",
-      unlockedAt: null
-    }
   ];
 
   const milestones = [
@@ -71,31 +62,23 @@ export default function Achievements() {
       name: "Mudra Initiate",
       requirements: "Learn 15 basic mudras",
       reward: "Mudra Badge + 200 Guru Points",
-      completed: false
+      completed: userAchievements.some(a => a.name === "Mudra Master")
     }
   ];
 
-  const recentAchievements = [
-    {
-      name: "Perfect Aramandi",
-      date: "2 days ago",
-      points: 50
-    },
-    {
-      name: "5-Day Streak",
-      date: "1 week ago",
-      points: 100
-    },
-    {
-      name: "First Performance",
-      date: "2 weeks ago",
-      points: 200
-    }
-  ];
-
-  const filteredAchievements = achievements.filter(achievement => 
+  const filteredAchievements = userAchievements.filter(achievement => 
     selectedCategory === 'all' || achievement.category === selectedCategory
   );
+
+  // Get recent achievements (last 3)
+  const recentAchievements = [...userAchievements]
+    .sort((a, b) => new Date(b.earnedAt) - new Date(a.earnedAt))
+    .slice(0, 3)
+    .map(achievement => ({
+      name: achievement.name,
+      date: new Date(achievement.earnedAt).toLocaleDateString(),
+      points: achievement.points
+    }));
 
   return (
     <div className="p-6 space-y-6">
@@ -107,8 +90,8 @@ export default function Achievements() {
         <div className="stats bg-white shadow">
           <div className="stat">
             <div className="stat-title text-orange-700">Total Score</div>
-            <div className="stat-value text-orange-900">2,450</div>
-            <div className="stat-desc text-orange-600">↗︎ 350 points this month</div>
+            <div className="stat-value text-orange-900">{totalPoints}</div>
+            <div className="stat-desc text-orange-600">Keep practicing to earn more!</div>
           </div>
         </div>
       </div>
@@ -135,21 +118,15 @@ export default function Achievements() {
         {/* Achievements Grid */}
         <div className="lg:col-span-2 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredAchievements.map((achievement) => (
+            {filteredAchievements.map((achievement, index) => (
               <div 
-                key={achievement.id} 
-                className={`card bg-white shadow-lg ${
-                  achievement.progress === 100 ? 'border-2 border-orange-300' : ''
-                }`}
+                key={index} 
+                className="card bg-white shadow-lg"
               >
                 <div className="card-body">
                   <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-lg ${
-                      achievement.rarity === 'epic' ? 'bg-gradient-to-br from-orange-100 to-pink-100' :
-                      achievement.rarity === 'rare' ? 'bg-orange-100' :
-                      'bg-gray-100'
-                    }`}>
-                      <achievement.icon className="w-8 h-8 text-orange-600" />
+                    <div className="p-3 rounded-lg bg-orange-100">
+                      <GiPeaceDove className="w-8 h-8 text-orange-600" />
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium text-orange-900">{achievement.name}</h3>
@@ -157,24 +134,14 @@ export default function Achievements() {
                     </div>
                   </div>
 
-                  <div className="mt-4">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-orange-900">Progress</span>
-                      <span className="text-orange-600">{achievement.current}/{achievement.target}</span>
-                    </div>
-                    <div className="w-full h-2 bg-orange-100 rounded-full">
-                      <div 
-                        className="h-full bg-orange-500 rounded-full transition-all duration-500"
-                        style={{ width: `${achievement.progress}%` }}
-                      />
-                    </div>
+                  <div className="mt-4 text-sm text-orange-600">
+                    Earned on {new Date(achievement.earnedAt).toLocaleDateString()}
                   </div>
 
-                  {achievement.unlockedAt && (
-                    <div className="mt-4 text-sm text-orange-600">
-                      Unlocked on {new Date(achievement.unlockedAt).toLocaleDateString()}
-                    </div>
-                  )}
+                  <div className="mt-2 flex items-center gap-2">
+                    <RiMedalLine className="w-5 h-5 text-orange-500" />
+                    <span className="text-orange-600 font-medium">+{achievement.points} points</span>
+                  </div>
                 </div>
               </div>
             ))}

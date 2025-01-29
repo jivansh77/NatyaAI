@@ -18,7 +18,7 @@ const Timeline = () => {
       year: "2nd Century BCE",
       title: "Ancient Origins",
       description: "Bharatanatyam's roots trace back to the ancient Sanskrit text 'Natya Shastra' by Bharata Muni, establishing the foundation of Indian classical dance.",
-      image: "bharat-ancient.jpg",
+      image: "https://karnatakatourism.org/wp-content/uploads/2020/05/Dane.jpg",
       details: "The Natya Shastra comprehensively covers all aspects of classical dance, including hand gestures (mudras), facial expressions (abhinaya), and body movements.",
       category: "Origins"
     },
@@ -145,10 +145,10 @@ const Timeline = () => {
           />
         </div>
 
-        {/* Music Toggle */}
+        {/* Music Toggle - Moved to top right */}
         <button
           onClick={toggleMusic}
-          className="fixed bottom-8 right-8 bg-gold/90 hover:bg-gold p-4 rounded-full shadow-lg transition-colors z-50"
+          className="fixed top-8 right-8 bg-gold/90 hover:bg-gold p-4 rounded-full shadow-lg transition-colors z-50"
           aria-label={isPlaying ? 'Pause Music' : 'Play Music'}
         >
           {isPlaying ? <FaPause className="w-6 h-6" /> : <FaPlay className="w-6 h-6" />}

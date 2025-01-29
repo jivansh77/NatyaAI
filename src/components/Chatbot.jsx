@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { MessageCircle, X, Send } from 'lucide-react';
 
 const Chatbot = () => {
   const [isDragging, setIsDragging] = useState(false);
@@ -50,7 +50,7 @@ const Chatbot = () => {
     setMessages(prev => [...prev, { text: userMessage, isUser: true }]);
 
     try {
-      const response = await fetch('http://localhost:5000/api/dance-advice', {
+      const response = await fetch('http://127.0.0.1:1024/api/dance-advice', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,6 +61,7 @@ const Chatbot = () => {
       const data = await response.json();
       setMessages(prev => [...prev, { text: data.response, isUser: false }]);
     } catch (error) {
+      console.error('Chat error:', error);
       setMessages(prev => [...prev, {
         text: "Sorry, I couldn't process your dance-related query at the moment.",
         isUser: false
@@ -70,7 +71,6 @@ const Chatbot = () => {
     }
   };
 
-  // Scroll to bottom when new messages arrive
   useEffect(() => {
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
@@ -80,61 +80,81 @@ const Chatbot = () => {
   return (
     <div style={{ position: 'fixed', right: '20px', bottom: '20px', zIndex: 1000 }}>
       {isOpen && (
-        <div className="absolute bottom-20 right-0 w-96 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
-          <div className="flex justify-between items-center p-4 border-b bg-primary text-white">
-            <h2 className="font-semibold">Dance Advisor</h2>
+        <div className="absolute bottom-20 right-0 w-96 bg-white rounded-lg shadow-xl border border-orange-100 overflow-hidden">
+          {/* Header */}
+          <div className="flex justify-between items-center p-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              <h2 className="font-semibold">Dance Advisor</h2>
+            </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white hover:text-gray-200"
+              className="text-white hover:text-orange-100 transition-colors"
             >
-              <X size={20} />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div ref={chatBoxRef} className="h-96 overflow-y-auto p-4 space-y-4 bg-gray-50">
+          {/* Chat Messages */}
+          <div 
+            ref={chatBoxRef} 
+            className="h-96 overflow-y-auto p-4 space-y-4 bg-gradient-to-br from-orange-50 to-pink-50"
+          >
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`chat ${message.isUser ? 'chat-end' : 'chat-start'}`}
+                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`chat-bubble ${
+                <div className={`max-w-[80%] p-3 rounded-lg ${
                   message.isUser 
-                    ? 'bg-primary text-white'
-                    : 'bg-secondary text-white'
-                } max-w-[80%]`}>
-                  {message.text}
+                    ? 'bg-orange-500 text-white rounded-br-none'
+                    : 'bg-white text-gray-800 shadow-md rounded-bl-none'
+                }`}>
+                  <p className="text-sm">{message.text}</p>
                 </div>
               </div>
             ))}
             {isLoading && (
-              <div className="chat chat-start">
-                <div className="chat-bubble bg-gray-200">
-                  Thinking about dance...
+              <div className="flex justify-start">
+                <div className="bg-white text-gray-800 p-3 rounded-lg shadow-md rounded-bl-none max-w-[80%]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce delay-100" />
+                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce delay-200" />
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          <form onSubmit={sendMessage} className="p-4 border-t bg-white flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about classical or folk dances..."
-              className="input input-bordered flex-1 bg-gray-50"
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              className={`btn btn-primary ${isLoading ? 'loading' : ''}`}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Sending...' : 'Send'}
-            </button>
+          {/* Input Form */}
+          <form onSubmit={sendMessage} className="p-4 border-t border-orange-100 bg-white">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about classical or folk dances..."
+                className="flex-1 px-4 py-2 rounded-lg border border-orange-200 focus:outline-none focus:border-orange-500 bg-orange-50"
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                disabled={isLoading || !input.trim()}
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </form>
         </div>
       )}
 
+      {/* Chat Button */}
       <div
         ref={dragRef}
         onMouseDown={handleMouseDown}
@@ -147,9 +167,9 @@ const Chatbot = () => {
       >
         <button
           onClick={() => !isDragging && setIsOpen(!isOpen)}
-          className="bg-primary hover:bg-primary-focus text-white p-4 rounded-full shadow-lg transition-all duration-200 ease-in-out hover:scale-105"
+          className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out hover:scale-105 flex items-center justify-center"
         >
-          <MessageCircle size={24} />
+          <MessageCircle className="w-6 h-6" />
         </button>
       </div>
     </div>

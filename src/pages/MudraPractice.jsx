@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { RiCameraLine, RiVolumeUpLine, RiFullscreenLine, RiArrowRightLine } from 'react-icons/ri';
+import { RiCameraLine, RiVolumeUpLine, RiFullscreenLine, RiArrowRightLine, RiSkipForwardLine } from 'react-icons/ri';
 import { GiPeaceDove } from 'react-icons/gi';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF } from '@react-three/drei';
+import { auth, db } from '../firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 function Model({ url }) {
   const { scene } = useGLTF(url);
@@ -19,13 +22,37 @@ function Model({ url }) {
   return <primitive object={scene} scale={1.28} position={[0, 0, 0]} />;
 }
 
+function BadgeModel() {
+  const { scene } = useGLTF('/badge.glb');
+  
+  useEffect(() => {
+    scene.traverse((child) => {
+      if (child.isMesh) {
+        child.material.metalness = 0.8;
+        child.material.roughness = 0.2;
+      }
+    });
+  }, [scene]);
+
+  return (
+    <primitive 
+      object={scene} 
+      scale={2} 
+      position={[0, 0, 0]} 
+      rotation={[0, performance.now() * 0.001, 0]} 
+    />
+  );
+}
+
 export default function MudraPractice() {
+  const [user] = useAuthState(auth);
   const [isRecording, setIsRecording] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [currentMudra, setCurrentMudra] = useState(null);
   const [feedback, setFeedback] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [showBadge, setShowBadge] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
@@ -180,6 +207,50 @@ export default function MudraPractice() {
     }
   }, [isRecording, currentStep]);
 
+  const handleSkip = () => {
+    if (currentStep < mudras.length - 1) {
+      setCurrentStep(prev => prev + 1);
+      setIsCorrect(false);
+    } else {
+      handleCompletion();
+    }
+  };
+
+  const handleCompletion = async () => {
+    if (!user) return;
+
+    try {
+      // Show badge animation
+      setShowBadge(true);
+
+      // Save achievement to Firestore
+      const achievementData = {
+        name: "Mudra Master",
+        description: "Completed all basic mudras practice",
+        category: "mudras",
+        earnedAt: new Date().toISOString(),
+        points: 100
+      };
+
+      const userRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const achievements = userDoc.data().achievements || [];
+        await setDoc(userRef, {
+          achievements: [...achievements, achievementData]
+        }, { merge: true });
+      }
+
+      // Hide badge after 3 seconds
+      setTimeout(() => {
+        setShowBadge(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error saving achievement:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -188,13 +259,43 @@ export default function MudraPractice() {
             <h1 className="text-3xl font-bold text-orange-900">Mudra Practice</h1>
             <p className="text-orange-700">Master the traditional hand gestures of Bharatanatyam</p>
           </div>
-          <button 
-            className={`px-6 py-2 rounded-lg ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'} text-white transition-colors`}
-            onClick={() => setIsRecording(!isRecording)}
-          >
-            {isRecording ? 'Stop Practice' : 'Start Practice'}
-          </button>
+          <div className="flex gap-4">
+            <button 
+              className="px-6 py-2 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-600 transition-colors"
+              onClick={handleSkip}
+            >
+              <div className="flex items-center gap-2">
+                <RiSkipForwardLine className="w-5 h-5" />
+                Skip
+              </div>
+            </button>
+            <button 
+              className={`px-6 py-2 rounded-lg ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'} text-white transition-colors`}
+              onClick={() => setIsRecording(!isRecording)}
+            >
+              {isRecording ? 'Stop Practice' : 'Start Practice'}
+            </button>
+          </div>
         </div>
+
+        {/* Badge Overlay */}
+        {showBadge && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="w-64 h-64 bg-transparent rounded-lg">
+              <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+                <ambientLight intensity={1.5} />
+                <directionalLight position={[5, 5, 5]} intensity={1.5} />
+                <Suspense fallback={null}>
+                  <BadgeModel />
+                </Suspense>
+              </Canvas>
+              <h2 className="text-center text-2xl font-bold text-white mt-4">
+                Achievement Unlocked!
+              </h2>
+              <p className="text-center text-white">Mudra Master</p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Video Feed */}

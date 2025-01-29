@@ -11,7 +11,7 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-HF_TOKEN = os.getenv('HF_TOKEN')
+HF_TOKEN = os.getenv('HUGGINGFACE_API_KEY')
 if not HF_TOKEN:
     raise ValueError("HF_TOKEN not found in environment variables")
 
@@ -93,5 +93,5 @@ def get_dance_advice():
         return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)   
+    app.run(debug=True, port=1024)   
     

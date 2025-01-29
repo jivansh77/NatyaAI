@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { 
   RiDashboardLine, 
   RiVideoLine,
@@ -18,6 +19,28 @@ export default function Sidebar() {
   const location = useLocation();
   const [user] = useAuthState(auth);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [guruScore, setGuruScore] = useState(0);
+
+  useEffect(() => {
+    const fetchGuruScore = async () => {
+      if (!user) return;
+
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists() && userDoc.data().achievements) {
+          const achievements = userDoc.data().achievements;
+          const totalPoints = achievements.reduce((total, achievement) => total + (achievement.points || 0), 0);
+          setGuruScore(totalPoints);
+        }
+      } catch (error) {
+        console.error('Error fetching guru score:', error);
+      }
+    };
+
+    fetchGuruScore();
+  }, [user]);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: RiDashboardLine },
@@ -109,7 +132,7 @@ export default function Sidebar() {
                   <p className="text-sm font-medium text-orange-900">{user?.displayName || user?.email || 'Guest Dancer'}</p>
                   <div className="flex items-center">
                     <GiPeaceDove className="w-4 h-4 text-orange-600 mr-1" />
-                    <p className="text-xs text-orange-700">Guru Score: 750</p>
+                    <p className="text-xs text-orange-700">Guru Score: {guruScore}</p>
                   </div>
                 </div>
               )}

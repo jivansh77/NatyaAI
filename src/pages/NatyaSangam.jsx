@@ -26,7 +26,7 @@ export default function NatyaSangam() {
       content: 'Just completed my first Bharatanatyam performance! Thank you to my guru and this amazing community for all the support.',
       media: {
         type: 'image',
-        url: '/performances/bharatanatyam-1.jpg'
+        url: 'https://karnatakatourism.org/wp-content/uploads/2020/05/Dane.jpg'
       },
       likes: 124,
       comments: 18,

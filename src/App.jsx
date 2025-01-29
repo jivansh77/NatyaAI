@@ -15,6 +15,7 @@ import DanceForm from './pages/Form'
 import { Toaster } from 'react-hot-toast'
 import CulturalFactPopup from './components/CulturalFactPopup'
 import GhungrooDetection from './components/GhungrooDetection'
+import Chatbot from './components/Chatbot'
 
 const AppContent = () => {
   const location = useLocation();
@@ -39,9 +40,11 @@ const AppContent = () => {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/form" element={<DanceForm />} />
           <Route path='/ghungroo' element={<GhungrooDetection/>}/>
+          <Route path='/chatbot' element={<Chatbot/>}/>
         </Routes>
       </div>
       <CulturalFactPopup />
+      <Chatbot />
     </div>
   );
 };
