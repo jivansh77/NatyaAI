@@ -23,6 +23,15 @@ export default {
           '50%': { opacity: '0' },
         },
       },
+      colors: {
+        deepred: '#8B0000',
+        gold: '#FFD700',
+        cream: '#FFFDD0',
+      },
+      fontFamily: {
+        serif: ['Crimson Text', 'serif'],
+        poppins: ['Poppins', 'sans-serif'],
+      },
     },
   },
   variants: {

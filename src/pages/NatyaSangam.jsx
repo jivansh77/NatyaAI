@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { RiHeartLine, RiHeartFill, RiChat3Line, RiShareLine, RiVideoLine, RiImageLine, RiUserSmileLine, RiSearchLine } from 'react-icons/ri';
 import { GiLotus, GiPeaceDove, GiMusicalNotes } from 'react-icons/gi';
+import { toast } from 'react-hot-toast';
 
 export default function NatyaSangam() {
   const [activeTab, setActiveTab] = useState('feed');
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [scheduledMentors, setScheduledMentors] = useState(new Set());
 
   const tabs = [
     { id: 'feed', name: 'Community Feed', icon: RiChat3Line },
@@ -102,6 +104,54 @@ export default function NatyaSangam() {
       achievements: ['National Dance Award', 'Cultural Ambassador']
     }
   ];
+
+  const handleScheduleClass = async (mentor) => {
+    // Change button state immediately
+    setScheduledMentors(prev => new Set([...prev, mentor.id]));
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mentorName: mentor.name,
+          specialization: mentor.specialization,
+          experience: mentor.experience
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send email');
+      }
+
+      toast.success('Class scheduled successfully! Check your email for details.');
+    } catch (error) {
+      console.error('Error scheduling class:', error);
+      toast.error('Failed to send email notification.');
+      // Note: We're not reverting the button state even if email fails
+    }
+  };
+
+  const renderActionButton = (mentor) => {
+    const isScheduled = scheduledMentors.has(mentor.id);
+    
+    return (
+      <button 
+        onClick={() => {
+          if (isScheduled) {
+            window.location.href = 'https://NatyaAI/call';
+          } else {
+            handleScheduleClass(mentor);
+          }
+        }}
+        className={`btn ${isScheduled ? 'bg-green-500' : 'bg-orange-500'} text-white hover:opacity-90`}
+      >
+        {isScheduled ? 'Join Room' : 'Schedule Class'}
+      </button>
+    );
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -317,9 +367,7 @@ export default function NatyaSangam() {
                         </div>
                         <div className="flex items-center justify-between mt-4">
                           <span className="text-sm text-orange-600">{mentor.availability}</span>
-                          <button className="btn bg-orange-500 text-white hover:bg-orange-600">
-                            Schedule Class
-                          </button>
+                          {renderActionButton(mentor)}
                         </div>
                       </div>
                     </div>

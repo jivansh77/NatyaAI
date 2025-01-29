@@ -1,204 +1,211 @@
-import { useState } from 'react';
-import { RiBookLine, RiSearchLine } from 'react-icons/ri';
-import { GiLotus, GiPeaceDove, GiMusicalNotes, GiIndianPalace } from 'react-icons/gi';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+import { ParallaxProvider, Parallax } from 'react-scroll-parallax';
+import { FaMusic, FaInfoCircle, FaPlay, FaPause } from 'react-icons/fa';
+import { Dialog } from '@headlessui/react';
+import backgroundMusic from '../assets/background-music.mp3';
+import templePattern from '../assets/temple-dance.jpg';
 
-export default function CulturalInsights() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+const Timeline = () => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const audioRef = useRef(new Audio(backgroundMusic));
+  const [scrollProgress, setScrollProgress] = useState(0);
 
-  const categories = [
-    { id: 'all', name: 'All', icon: GiLotus },
-    { id: 'mythology', name: 'Mythology', icon: GiIndianPalace },
-    { id: 'mudras', name: 'Mudras', icon: GiPeaceDove },
-    { id: 'music', name: 'Music & Rhythm', icon: GiMusicalNotes },
-  ];
-
-  const insights = [
+  const timelineEvents = [
     {
-      id: 1,
-      title: "The Story of Nataraja",
-      description: "Explore the cosmic dance of Lord Shiva and its profound symbolism in Indian classical dance.",
-      category: "mythology",
-      readTime: "10 min",
-      image: "/images/nataraja.jpg",
-      featured: true
+      year: "2nd Century BCE",
+      title: "Ancient Origins",
+      description: "Bharatanatyam's roots trace back to the ancient Sanskrit text 'Natya Shastra' by Bharata Muni, establishing the foundation of Indian classical dance.",
+      image: "/public/images/ancient-origins.jpg",
+      details: "The Natya Shastra comprehensively covers all aspects of classical dance, including hand gestures (mudras), facial expressions (abhinaya), and body movements.",
+      category: "Origins"
     },
     {
-      id: 2,
-      title: "Understanding Hasta Mudras",
-      description: "Learn the intricate hand gestures that form the language of Indian classical dance.",
-      category: "mudras",
-      readTime: "15 min",
-      image: "/images/mudras.jpg"
+      year: "6th-12th Century CE",
+      title: "Temple Dance Tradition",
+      description: "Flourishing period of the Devadasi system in South Indian temples, particularly during the Chola dynasty.",
+      image: "/public/images/temple-dance.jpg",
+      details: "Devadasis were dedicated temple dancers who preserved and evolved the art form through generations.",
+      category: "Evolution"
     },
     {
-      id: 3,
-      title: "The Navarasas",
-      description: "Discover the nine emotions that are fundamental to Indian classical dance and their expressions.",
-      category: "mythology",
-      readTime: "12 min",
-      image: "/images/navarasas.jpg"
-    },
-    {
-      id: 4,
-      title: "Understanding Carnatic Music",
-      description: "Explore the melodic and rhythmic foundations of South Indian classical music.",
-      category: "music",
-      readTime: "20 min",
-      image: "/images/carnatic.jpg"
+      year: "20th Century",
+      title: "Modern Revival",
+      description: "The renaissance of Bharatanatyam through pioneers like Rukmini Devi Arundale, who established Kalakshetra.",
+      image: "/public/images/modern-revival.jpg",
+      details: "This period marked the transformation of Bharatanatyam from a temple art to a globally recognized classical dance form.",
+      category: "Modern Era"
     }
   ];
 
-  const filteredInsights = insights.filter(insight => {
-    const matchesCategory = selectedCategory === 'all' || insight.category === selectedCategory;
-    const matchesSearch = insight.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         insight.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  useEffect(() => {
+    const handleScroll = () => {
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const scrolled = window.scrollY;
+      const progress = (scrolled / (documentHeight - windowHeight)) * 100;
+      setScrollProgress(Math.min(progress, 100));
+    };
 
-  const featuredInsight = insights.find(insight => insight.featured);
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Initial calculation
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      audioRef.current.pause(); // Cleanup audio on unmount
+    };
+  }, []);
+
+  const toggleMusic = () => {
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(error => {
+        console.error("Audio playback failed:", error);
+      });
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const TimelineEvent = ({ event, index }) => {
+    const [ref, inView] = useInView({
+      threshold: 0.2,
+      triggerOnce: true
+    });
+
+    return (
+      <motion.div
+        ref={ref}
+        initial={{ opacity: 0, y: 50 }}
+        animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+        transition={{ duration: 0.8, delay: index * 0.2 }}
+        className="relative mb-20"
+      >
+        <Parallax y={[-20, 20]} className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="event-content">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                transition={{ delay: 0.3 }}
+                className="bg-gradient-to-r from-red-900/90 to-red-800/90 p-8 rounded-lg shadow-xl border border-gold/30"
+              >
+                <span className="text-gold text-sm font-semibold">{event.year}</span>
+                <h3 className="text-2xl font-serif text-gold mb-4">{event.title}</h3>
+                <p className="text-cream/90 mb-4">{event.description}</p>
+                <button
+                  onClick={() => setSelectedEvent(event)}
+                  className="text-gold hover:text-cream flex items-center gap-2 transition-colors"
+                >
+                  <FaInfoCircle /> Learn More
+                </button>
+              </motion.div>
+            </div>
+            <div className="event-image">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="relative overflow-hidden rounded-lg shadow-2xl"
+              >
+                <img
+                  src={event.image}
+                  alt={event.title}
+                  className="w-full h-80 object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+              </motion.div>
+            </div>
+          </div>
+        </Parallax>
+      </motion.div>
+    );
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-orange-900">Cultural Insights</h1>
-          <p className="text-orange-700 mt-1">Explore the rich heritage of Indian classical dance</p>
-        </div>
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search insights..."
-            className="input input-bordered w-64 pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+    <ParallaxProvider>
+      <div className="min-h-screen bg-deepred text-cream font-poppins relative overflow-hidden">
+        {/* Background Pattern */}
+        <div 
+          className="fixed inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `url(${templePattern})`,
+            backgroundSize: '400px',
+            backgroundRepeat: 'repeat'
+          }}
+        />
+
+        {/* Progress Indicator */}
+        <div className="fixed right-8 top-1/2 transform -translate-y-1/2 h-64 w-1 bg-gold/30 rounded-full z-50">
+          <motion.div
+            className="w-full bg-gold rounded-full"
+            initial={{ height: 0 }}
+            animate={{ height: `${scrollProgress}%` }}
+            transition={{ duration: 0.1 }}
           />
-          <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-600" />
         </div>
-      </div>
 
-      {/* Featured Story */}
-      {featuredInsight && (
-        <div className="card bg-gradient-to-r from-orange-100 to-pink-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex items-start gap-6">
-              <div className="flex-1">
-                <h2 className="card-title text-2xl text-orange-900 mb-3">{featuredInsight.title}</h2>
-                <p className="text-orange-800 mb-4">{featuredInsight.description}</p>
-                <div className="flex items-center gap-4">
-                  <button className="btn bg-orange-600 hover:bg-orange-700 text-white border-none">
-                    Read Story
-                  </button>
-                  <button className="btn btn-outline border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
-                    Watch Video
-                  </button>
-                </div>
-              </div>
-              <div className="w-64 h-64 bg-orange-200 rounded-lg">
-                {/* Placeholder for featured image */}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* Music Toggle */}
+        <button
+          onClick={toggleMusic}
+          className="fixed bottom-8 right-8 bg-gold/90 hover:bg-gold p-4 rounded-full shadow-lg transition-colors z-50"
+          aria-label={isPlaying ? 'Pause Music' : 'Play Music'}
+        >
+          {isPlaying ? <FaPause className="w-6 h-6" /> : <FaPlay className="w-6 h-6" />}
+        </button>
 
-      {/* Category Filters */}
-      <div className="flex gap-2">
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            className={`btn btn-lg gap-2 ${
-              selectedCategory === category.id
-                ? 'bg-orange-100 text-orange-900 border-orange-200'
-                : 'bg-white text-orange-800 border-orange-100 hover:bg-orange-50'
-            }`}
-            onClick={() => setSelectedCategory(category.id)}
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 py-16 relative">
+          <motion.header
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-24"
           >
-            <category.icon className="w-5 h-5" />
-            {category.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Insights Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredInsights.map((insight) => (
-          <div key={insight.id} className="card bg-white shadow-lg hover:shadow-xl transition-shadow">
-            <div className="aspect-video bg-orange-100 rounded-t-lg">
-              {/* Placeholder for insight image */}
-            </div>
-            <div className="card-body">
-              <div className="flex items-start justify-between">
-                <h3 className="card-title text-orange-900">{insight.title}</h3>
-                <span className="badge bg-orange-100 text-orange-700 border-none">
-                  {categories.find(c => c.id === insight.category)?.name}
-                </span>
-              </div>
-              <p className="text-orange-700 mt-2">{insight.description}</p>
-              <div className="flex justify-between items-center mt-4">
-                <div className="flex items-center gap-2 text-orange-600">
-                  <RiBookLine className="w-4 h-4" />
-                  <span className="text-sm">{insight.readTime} read</span>
-                </div>
-                <button className="btn btn-sm btn-ghost text-orange-600 hover:bg-orange-50">
-                  Learn More
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Interactive Elements */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="card bg-white shadow-lg">
-          <div className="card-body">
-            <h2 className="card-title text-orange-900">
-              <GiPeaceDove className="text-orange-600" />
-              Interactive Mudra Guide
-            </h2>
-            <div className="grid grid-cols-3 gap-4 mt-4">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div 
-                  key={i}
-                  className="aspect-square bg-orange-50 rounded-lg flex items-center justify-center cursor-pointer hover:bg-orange-100 transition-colors"
-                >
-                  <GiPeaceDove className="w-8 h-8 text-orange-600" />
-                </div>
-              ))}
-            </div>
-            <p className="text-sm text-orange-700 mt-4">
-              Click on any mudra to learn its meaning and usage in dance
+            <h1 className="text-5xl font-serif text-gold mb-6">
+              The Journey of Bharatanatyam
+            </h1>
+            <p className="text-xl text-cream/80 max-w-2xl mx-auto">
+              Explore the rich history and evolution of one of India's most ancient and revered classical dance forms
             </p>
+          </motion.header>
+
+          <div className="timeline-content space-y-32">
+            {timelineEvents.map((event, index) => (
+              <TimelineEvent key={index} event={event} index={index} />
+            ))}
           </div>
         </div>
 
-        <div className="card bg-white shadow-lg">
-          <div className="card-body">
-            <h2 className="card-title text-orange-900">
-              <GiMusicalNotes className="text-orange-600" />
-              Tala Patterns
-            </h2>
-            <div className="space-y-4 mt-4">
-              {[
-                { name: 'Adi Talam', beats: '8 beats' },
-                { name: 'Rupaka Talam', beats: '6 beats' },
-                { name: 'Khanda Chapu', beats: '5 beats' }
-              ].map((tala, index) => (
-                <div 
-                  key={index}
-                  className="p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors cursor-pointer"
+        {/* Event Detail Modal */}
+        <AnimatePresence>
+          {selectedEvent && (
+            <Dialog
+              open={!!selectedEvent}
+              onClose={() => setSelectedEvent(null)}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-deepred border border-gold/30 rounded-lg p-8 max-w-2xl w-full shadow-2xl relative z-50"
+              >
+                <h2 className="text-3xl font-serif text-gold mb-4">{selectedEvent.title}</h2>
+                <p className="text-cream/90 mb-6">{selectedEvent.details}</p>
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="absolute top-4 right-4 text-gold hover:text-cream"
                 >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-orange-900">{tala.name}</span>
-                    <span className="text-sm text-orange-700">{tala.beats}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                  ✕
+                </button>
+              </motion.div>
+            </Dialog>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </ParallaxProvider>
   );
-} 
+};
+
+export default Timeline; 

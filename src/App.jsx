@@ -9,6 +9,7 @@ import Journey from './pages/Journey'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import DanceForm from './pages/Form'
+import { Toaster } from 'react-hot-toast'
 
 const AppContent = () => {
   const location = useLocation();
@@ -37,8 +38,11 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <>
+      <Toaster position="top-right" />
+      <Router>
+        <AppContent />
+      </Router>
+    </>
   );
 }
