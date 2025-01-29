@@ -10,6 +10,7 @@ import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
 import DanceForm from './pages/Form'
 import CulturalFactPopup from './components/CulturalFactPopup'
+import GhungrooDetection from './components/GhungrooDetection'
 
 const AppContent = () => {
   const location = useLocation();
@@ -31,6 +32,7 @@ const AppContent = () => {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/form" element={<DanceForm />} />
           <Route path="/popup" element={<CulturalFactPopup/>}/>
+          <Route path='/ghungroo' element={<GhungrooDetection/>}/>
         </Routes>
       </div>
     </div>
