@@ -1,272 +1,174 @@
-import { useState } from 'react';
-import { RiTimeLine, RiMedalLine, RiStarLine, RiBarChartLine, RiCalendarLine } from 'react-icons/ri';
-import { GiLotus, GiPeaceDove, GiMusicalNotes } from 'react-icons/gi';
+import React, { useEffect, useState } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import '../styles/map.css';
+
+// Dance data
+const dances = [
+  { name: "Bharatanatyam", state: "Tamil Nadu", coords: [10.8505, 78.6921], description: "One of the oldest classical dance forms of India, Bharatanatyam originated in Tamil Nadu. It is known for its grace, purity, tenderness, and sculptures-like poses." },
+  { name: "Kathak", state: "Uttar Pradesh", coords: [26.8467, 80.9462], description: "Kathak is one of the major forms of Indian classical dance. The word Kathak is derived from katha, meaning 'the art of storytelling.'" },
+  { name: "Odissi", state: "Odisha", coords: [20.9517, 85.0985], description: "Odissi is a major ancient Indian classical dance that originated in the temples of Odisha. It is known for its fluid movements and strong storytelling elements." },
+  { name: "Manipuri", state: "Manipur", coords: [24.8170, 93.9368], description: "Manipuri dance is one of the major Indian classical dance forms. It is characterized by gentle, graceful movements and is often performed to narrate scenes from Krishna's life." },
+  { name: "Garba", state: "Gujarat", coords: [22.2587, 71.1924], description: "Garba is a traditional folk dance form originating from Gujarat. It is performed during Navratri and involves rhythmic movements in a circular pattern." },
+  { name: "Bhangra", state: "Punjab", coords: [31.1471, 75.3412], description: "Bhangra is a lively folk dance from Punjab, traditionally associated with the harvest season. It is known for its energetic moves and vibrant music." }
+];
+
+// Events data
+const eventsData = {
+  bharatanatyam: [
+    { 
+      id: 1, 
+      title: "Classical Night: Bharatanatyam", 
+      date: "2025-02-15", 
+      venue: "Chennai Music Academy", 
+      price: "₹500",
+      coords: [13.0327, 80.2707]
+    },
+    { 
+      id: 2, 
+      title: "Temple Dance Festival", 
+      date: "2025-03-01", 
+      venue: "Thanjavur Temple", 
+      price: "₹300",
+      coords: [10.7870, 79.1378]
+    }
+  ],
+  kathak: [
+    { 
+      id: 3, 
+      title: "Kathak Utsav", 
+      date: "2025-02-20", 
+      venue: "Lucknow Sangeet Sabha", 
+      price: "₹400",
+      coords: [26.8467, 80.9462]
+    },
+    { 
+      id: 4, 
+      title: "Rhythm & Grace", 
+      date: "2025-03-10", 
+      venue: "Ghanshyam Auditorium, Varanasi", 
+      price: "₹450",
+      coords: [25.3176, 82.9739]
+    }
+  ]
+};
 
 export default function Journey() {
-  const [selectedTimeframe, setSelectedTimeframe] = useState('month');
+  const [selectedDance, setSelectedDance] = useState(null);
+  const [selectedEvents, setSelectedEvents] = useState([]);
 
-  const timeframes = [
-    { id: 'week', name: 'This Week' },
-    { id: 'month', name: 'This Month' },
-    { id: 'year', name: 'This Year' },
-    { id: 'all', name: 'All Time' }
-  ];
+  useEffect(() => {
+    // Initialize map with adjusted zoom level
+    const map = L.map('map', {
+      zoomControl: true,
+      scrollWheelZoom: false,  // Disable zoom with mouse wheel
+      dragging: true,          // Allow panning
+      minZoom: 4,             // Set minimum zoom level
+      maxZoom: 8              // Set maximum zoom level
+    }).setView([23.5937, 78.9629], 4);  // Centered on India with zoom level 4
 
-  const practiceStats = {
-    totalHours: 48,
-    totalSessions: 96,
-    averageAccuracy: 85,
-    currentStreak: 7,
-    bestStreak: 14
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: ''
+    }).addTo(map);
+
+    // Add dance markers
+    dances.forEach(dance => {
+      L.marker(dance.coords)
+        .addTo(map)
+        .bindPopup(`<b>${dance.name}</b><br>${dance.state}`)
+        .on('click', () => {
+          const danceName = dance.name.toLowerCase();
+          setSelectedDance(dance);
+          setSelectedEvents(eventsData[danceName] || []);
+        });
+    });
+
+    // Add event markers
+    const eventIcon = L.divIcon({
+      className: 'event-marker',
+      html: '🎭',
+      iconSize: [25, 25]
+    });
+
+    Object.values(eventsData).forEach(danceEvents => {
+      danceEvents.forEach(event => {
+        L.marker(event.coords, { icon: eventIcon })
+          .addTo(map)
+          .bindPopup(`
+            <div class="event-popup">
+              <div class="event-title">${event.title}</div>
+              <div class="event-date">${formatDate(event.date)}</div>
+              <div>${event.venue}</div>
+              <div><strong>${event.price}</strong></div>
+            </div>
+          `);
+      });
+    });
+
+    // Cleanup on unmount
+    return () => {
+      map.remove();
+    };
+  }, []);
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
-  const progressHistory = [
-    {
-      date: '2024-03-15',
-      hours: 2,
-      accuracy: 88,
-      highlights: ['Mastered Tripataka Mudra', 'Completed Adavus Set 1'],
-      feedback: 'Excellent rhythm control in today\'s practice'
-    },
-    {
-      date: '2024-03-14',
-      hours: 1.5,
-      accuracy: 82,
-      highlights: ['Practiced Aramandi position'],
-      feedback: 'Good progress on posture alignment'
-    },
-    {
-      date: '2024-03-13',
-      hours: 1,
-      accuracy: 85,
-      highlights: ['Started learning new Tala pattern'],
-      feedback: 'Keep working on timing consistency'
-    }
-  ];
-
-  const skillProgress = [
-    {
-      category: 'Mudras',
-      skills: [
-        { name: 'Basic Hand Gestures', progress: 90 },
-        { name: 'Combined Mudras', progress: 60 },
-        { name: 'Expressive Gestures', progress: 40 }
-      ]
-    },
-    {
-      category: 'Footwork',
-      skills: [
-        { name: 'Basic Steps', progress: 85 },
-        { name: 'Adavus', progress: 70 },
-        { name: 'Complex Patterns', progress: 30 }
-      ]
-    },
-    {
-      category: 'Expression',
-      skills: [
-        { name: 'Facial Expressions', progress: 75 },
-        { name: 'Emotional Portrayal', progress: 55 },
-        { name: 'Character Interpretation', progress: 45 }
-      ]
-    }
-  ];
-
-  const nextMilestones = [
-    {
-      name: 'Advanced Mudras',
-      description: 'Master 10 advanced hand gestures',
-      progress: 60,
-      reward: '200 Guru Points'
-    },
-    {
-      name: 'Performance Ready',
-      description: 'Complete 3 full dance sequences',
-      progress: 40,
-      reward: 'Performance Badge'
-    },
-    {
-      name: 'Rhythm Master',
-      description: 'Master all basic tala patterns',
-      progress: 75,
-      reward: '300 Guru Points'
-    }
-  ];
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-orange-900">My Journey</h1>
-          <p className="text-orange-700 mt-1">Your dance learning progress and achievements</p>
+    <div className="container mx-auto p-6 h-screen">
+      <h1 className="text-2xl font-bold text-orange-900 mb-6">Dance Map of India</h1>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100%-5rem)]">
+        <div className="lg:col-span-2">
+          <div id="map" className="h-full rounded-lg shadow-lg"></div>
         </div>
-        
-        {/* Timeframe Filter */}
-        <div className="flex gap-2">
-          {timeframes.map((timeframe) => (
-            <button
-              key={timeframe.id}
-              className={`btn ${
-                selectedTimeframe === timeframe.id
-                  ? 'bg-orange-100 text-orange-900 border-orange-200'
-                  : 'bg-white text-orange-800 border-orange-100 hover:bg-orange-50'
-              }`}
-              onClick={() => setSelectedTimeframe(timeframe.id)}
-            >
-              {timeframe.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="card bg-white shadow-lg p-4">
-          <div className="flex items-center gap-3">
-            <RiTimeLine className="w-8 h-8 text-orange-600" />
-            <div>
-              <div className="text-sm text-orange-700">Total Hours</div>
-              <div className="text-xl font-bold text-orange-900">{practiceStats.totalHours}h</div>
-            </div>
-          </div>
-        </div>
-        <div className="card bg-white shadow-lg p-4">
-          <div className="flex items-center gap-3">
-            <RiCalendarLine className="w-8 h-8 text-orange-600" />
-            <div>
-              <div className="text-sm text-orange-700">Sessions</div>
-              <div className="text-xl font-bold text-orange-900">{practiceStats.totalSessions}</div>
-            </div>
-          </div>
-        </div>
-        <div className="card bg-white shadow-lg p-4">
-          <div className="flex items-center gap-3">
-            <RiBarChartLine className="w-8 h-8 text-orange-600" />
-            <div>
-              <div className="text-sm text-orange-700">Avg. Accuracy</div>
-              <div className="text-xl font-bold text-orange-900">{practiceStats.averageAccuracy}%</div>
-            </div>
-          </div>
-        </div>
-        <div className="card bg-white shadow-lg p-4">
-          <div className="flex items-center gap-3">
-            <RiStarLine className="w-8 h-8 text-orange-600" />
-            <div>
-              <div className="text-sm text-orange-700">Current Streak</div>
-              <div className="text-xl font-bold text-orange-900">{practiceStats.currentStreak} days</div>
-            </div>
-          </div>
-        </div>
-        <div className="card bg-white shadow-lg p-4">
-          <div className="flex items-center gap-3">
-            <RiMedalLine className="w-8 h-8 text-orange-600" />
-            <div>
-              <div className="text-sm text-orange-700">Best Streak</div>
-              <div className="text-xl font-bold text-orange-900">{practiceStats.bestStreak} days</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Skill Progress */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="card bg-white shadow-lg">
-            <div className="card-body">
-              <h2 className="card-title text-orange-900">Skill Progress</h2>
-              <div className="space-y-6 mt-4">
-                {skillProgress.map((category, index) => (
-                  <div key={index} className="space-y-4">
-                    <h3 className="font-medium text-orange-800">{category.category}</h3>
-                    <div className="space-y-3">
-                      {category.skills.map((skill, skillIndex) => (
-                        <div key={skillIndex}>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-orange-900">{skill.name}</span>
-                            <span className="text-orange-600">{skill.progress}%</span>
-                          </div>
-                          <div className="w-full h-2 bg-orange-100 rounded-full">
-                            <div
-                              className="h-full bg-orange-500 rounded-full transition-all duration-500"
-                              style={{ width: `${skill.progress}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+        <div className="space-y-6 overflow-auto max-h-full">
+          <div className="min-h-[100px]">
+            {selectedDance ? (
+              <div className="bg-white p-4 rounded-lg shadow">
+                <h3 className="text-xl font-bold text-orange-900">{selectedDance.name}</h3>
+                <div className="text-orange-600 font-medium mb-2">{selectedDance.state}</div>
+                <p className="text-gray-600">{selectedDance.description}</p>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Next Milestones */}
-        <div className="space-y-6">
-          <div className="card bg-white shadow-lg">
-            <div className="card-body">
-              <h2 className="card-title text-orange-900">Next Milestones</h2>
-              <div className="space-y-4 mt-4">
-                {nextMilestones.map((milestone, index) => (
-                  <div key={index} className="space-y-2">
-                    <h3 className="font-medium text-orange-900">{milestone.name}</h3>
-                    <p className="text-sm text-orange-700">{milestone.description}</p>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-orange-600">{milestone.progress}%</span>
-                      <span className="text-orange-600">Reward: {milestone.reward}</span>
-                    </div>
-                    <div className="w-full h-2 bg-orange-100 rounded-full">
-                      <div
-                        className="h-full bg-orange-500 rounded-full transition-all duration-500"
-                        style={{ width: `${milestone.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+            ) : (
+              <div className="bg-orange-50 p-4 rounded-lg text-center">
+                Click on a marker to see dance details
               </div>
-            </div>
+            )}
           </div>
-        </div>
-      </div>
-
-      {/* Practice History */}
-      <div className="card bg-white shadow-lg">
-        <div className="card-body">
-          <h2 className="card-title text-orange-900">Practice History</h2>
-          <div className="space-y-6 mt-4">
-            {progressHistory.map((entry, index) => (
-              <div key={index} className="border-b border-orange-100 pb-4 last:border-0">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <RiCalendarLine className="w-5 h-5 text-orange-600" />
-                    <span className="font-medium text-orange-900">
-                      {new Date(entry.date).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </span>
+          <div>
+            <h3 className="text-lg font-semibold text-orange-900 mb-3">Upcoming Events</h3>
+            <div className="space-y-2">
+              {selectedDance ? (
+                selectedEvents.length > 0 ? (
+                  selectedEvents.map(event => (
+                    <div key={event.id} className="bg-white p-4 rounded-lg shadow mb-2">
+                      <div className="font-bold text-orange-900">{event.title}</div>
+                      <div className="text-orange-600">{formatDate(event.date)}</div>
+                      <div className="text-gray-600">{event.venue}</div>
+                      <div className="font-medium text-orange-600 mt-2">{event.price}</div>
+                      <button className="btn btn-sm bg-orange-600 hover:bg-orange-700 text-white border-none w-full mt-2">
+                        Book Now
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-orange-50 p-4 rounded-lg text-center">
+                    No upcoming events for {selectedDance.name}
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm text-orange-700">{entry.hours} hours</span>
-                    <span className="text-sm text-orange-700">{entry.accuracy}% accuracy</span>
-                  </div>
+                )
+              ) : (
+                <div className="bg-orange-50 p-4 rounded-lg text-center">
+                  Select a dance form to see related events
                 </div>
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    {entry.highlights.map((highlight, hIndex) => (
-                      <span
-                        key={hIndex}
-                        className="px-2 py-1 bg-orange-50 text-orange-700 rounded-full text-sm"
-                      >
-                        {highlight}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-sm text-orange-700">{entry.feedback}</p>
-                </div>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
         </div>
       </div>

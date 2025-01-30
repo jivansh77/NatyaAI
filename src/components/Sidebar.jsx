@@ -11,7 +11,8 @@ import {
   RiTrophyLine,
   RiHeartLine,
   RiArrowLeftLine,
-  RiArrowRightLine
+  RiArrowRightLine,
+  RiMapPin2Fill,
 } from 'react-icons/ri';
 import { GiLotus, GiPeaceDove } from 'react-icons/gi';
 
@@ -48,7 +49,7 @@ export default function Sidebar() {
     { name: 'Cultural Timeline', href: '/timeline', icon: RiBookLine },
     { name: 'NatyaSangam', href: '/natya-sangam', icon: RiGroupLine },
     { name: 'Achievements', href: '/achievements', icon: RiTrophyLine },
-    { name: 'My Journey', href: '/journey', icon: RiHeartLine },
+    { name: 'Event Map', href: '/journey', icon: RiMapPin2Fill },
   ];
 
   const dailyQuote = {
